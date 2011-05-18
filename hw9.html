@@ -1,0 +1,149 @@
+<html>
+<head>
+<style>
+#updateArea{text-align: left;}
+#c1{text-align: center;}
+#c2{text-align: center;}
+img{margin-left:5px; margin-right:5px; margin-top:5px; margin-bottom:5px;}
+</style>
+</head>
+<script src="http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php" type="text/javascript"></script>
+<script type="text/javascript" language="JavaScript">
+var req, fsource;
+function validate(form)
+{
+document.getElementById('updateArea').innerHTML = "";
+document.getElementById('enlargedimage').innerHTML = "";
+var url = "../servlet/ajax_flickr";
+var test1 = /^([a-zA-Z])+.*(\,{1})(\s{1})([a-zA-Z])+.*/;
+var s1 = form.searchval.value;
+//alert(s1);
+if(test1.test(s1)==false)
+{
+alert("Please enter the search value as CITY, STATE");
+}
+else{loadXMLDoc(url);}
+}
+function loadXMLDoc(url) {
+req = false;
+// branch for native XMLHttpRequest object
+if(window.XMLHttpRequest) {
+try {
+req = new XMLHttpRequest();
+} catch(e) {
+req = false;
+}
+// branch for IE/Windows ActiveX version
+} else if(window.ActiveXObject) {
+try {
+req = new ActiveXObject("Msxml2.XMLHTTP");
+} catch(e) {
+try {
+req = new ActiveXObject("Microsoft.XMLHTTP");
+} catch(e) {
+req = false;
+}
+}
+}
+if(req) {
+var searchval=encodeURIComponent(document.getElementById('searchval').value);
+//alert(searchval);
+req.onreadystatechange = processReqChange;
+req.open("GET", url+"?searchval="+searchval, true);
+req.setRequestHeader("Connection", "Close");
+req.setRequestHeader("Method", "GET" + url + "HTTP/1.1");
+req.send(null);
+}else {
+var s1 = "Sorry, but I couldn't create an XMLHttpRequest";
+document.getElementById('updateArea').innerHTML = s1; }
+}
+fetch_unix_timestamp = function()
+{
+	return parseInt(new Date().getTime().toString().substring(0, 10))
+}
+function processReqChange()
+{
+if (req.readyState == 4) {
+        if (req.status == 200) {
+            // update the HTML DOM based on whether or not message is valid
+			//alert("hi");
+			var test11 = /java\..*/;
+			var doc1 = req.responseText;
+			//document.getElementById('updateArea').innerHTML = doc;
+			var doc = eval('(' + req.responseText + ')');
+			//document.getElementById('updateArea').innerHTML = doc;
+			//var doc = jsonParse(req.responseText);
+			document.getElementById('updateArea').innerHTML=req.responseText;
+			if(doc1.match(test11))
+			{document.getElementById('updateArea').innerHTML=doc1;}
+			//document.getElementById('updateArea').innerHTML=doc.photos.photo[1].title;
+			//document.getElementById('updateArea').innerHTML = doc.photos.photo.length;
+			else
+			{
+			if(doc.photos.length!=1){document.getElementById('updateArea').innerHTML = "Error: Please enter a valid city";}
+			var i = 0,arr1 ="";
+			var arr = new Array();
+			for(i=0;i<doc.photos.photo.length;i++)
+			{
+			arr1 += "<img src=\"http://farm"+doc.photos.photo[i].farm+".static.flickr.com/"+doc.photos.photo[i].server+"/"+doc.photos.photo[i].id+"_"+doc.photos.photo[i].secret+"_s.jpg\" onclick=\"enlarge(this.name,this.src,event)\" name=\"image"+i+"\" />";
+			//document.getElementByName('updateArea').innerHTML = arr[i];
+			}
+			document.getElementById('updateArea').innerHTML = arr1;
+			//alert(document.images[2].name);
+			}
+			}
+			}
+}
+function enlarge(nam,source,e)
+{
+//x = e.offsetX?(e.offsetX):e.pageX-document.getElementById("updateArea").offsetLeft;
+var ev=(!e)?window.event:e;//IE:Moz
+if (ev.pageX){//Moz
+x=ev.pageX+window.pageXOffset;
+}
+else if(ev.clientX){//IE
+x=ev.clientX+document.body.scrollLeft;
+}
+//alert(pos_x);
+var t1 = /_s/;
+source = source.replace(t1,"");
+//alert(source);
+var arrt = "<img src=\""+source+"\" />";
+var siz = document.documentElement.clientWidth;
+if(x-200>0)
+{document.getElementById('enlargedimage').style.marginLeft = x-150;}
+if(x-200<0){document.getElementById('enlargedimage').style.marginLeft = 0;}
+if(x+400>siz){document.getElementById('enlargedimage').style.marginLeft = siz-525;}
+document.getElementById('enlargedimage').innerHTML = arrt;
+document.getElementById('upload').disabled = false;
+fsource = source;
+}
+function fbapi()
+{
+//alert(fsource);
+            //init facebook
+            FB_RequireFeatures(["Connect"], function() {
+                FB.Facebook.init('556a9faa08333637150313f81730b488', 'xd_receiver.html');
+                FB.ensureInit(function() {
+                    var message = 'likes this image from Flickr!';
+                    var attachment = {"media": [{ "type": "image", "src": fsource, "href": "http://www.flickr.com"}]};
+                    FB.Connect.streamPublish(message, attachment, null, null, null, callback, false, null);//, action_links, null, "image from flickr", callback, false, null);
+                });
+            });
+            function callback(post_id, exception) {
+			if(exception!=null)
+			              {alert(exception);}
+            }
+}
+</script>
+<body>
+<form method="get">
+<p id="c1"><input type = "text" name="searchval" id="searchval"></input>
+<input type = "button" value = "Search" onclick="validate(this.form)" id="search"></input><br/>
+ENTER 'City, State' and click on SEARCH</p>
+<div id="enlargedimage" style="height: 525">&nbsp;</div>
+<div id="updateArea">&nbsp;</div>
+<p id="c2">select a photo and click here to upload to Facebook<input type = "button" value="upload" name="upload" id="upload" disabled="true" onclick="fbapi()"></input></p>
+</form>
+</body>
+</html>
